@@ -11,9 +11,23 @@ class HumanoidFlatEnvCfg(HumanoidRoughEnvCfg):
         super().__post_init__()
 
         # override rewards
-        self.rewards.flat_orientation_l2.weight = -5.0
+        self.rewards.flat_orientation_l2.weight = -2.0
         self.rewards.joint_torques_l2.weight = -2.5e-5
-        self.rewards.feet_air_time.weight = 0.5
+        self.rewards.feet_air_time.weight = 2.0
+        self.rewards.feet_air_time.params["threshold_min"] = 0.15
+        self.rewards.track_lin_vel_xy_exp.weight = 2.0
+        self.rewards.track_ang_vel_z_exp.weight = 1.0
+
+        #spawn straight        
+        self.randomization.reset_base.params["velocity_range"] = {
+            "x": (0.0, 0.0),
+            "y": (0.0, 0.0),
+            "z": (0.0, 0.0),
+            "roll": (0.0, 0.0),
+            "pitch": (0.0, 0.0),
+            "yaw": (0.0, 0.0),
+        }
+
         # change terrain to flat
         self.scene.terrain.terrain_type = "plane"
         self.scene.terrain.terrain_generator = None

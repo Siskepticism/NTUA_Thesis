@@ -44,7 +44,9 @@ class HumanoidFlatPPORunnerCfg(HumanoidRoughPPORunnerCfg):
     def __post_init__(self):
         super().__post_init__()
 
-        self.max_iterations = 5000
+        self.max_iterations = 4000
         self.experiment_name = "h1_2_flat"
-        self.actor.hidden_dims = [128, 128, 128]
-        self.critic.hidden_dims = [128, 128, 128]
+        self.actor.obs_normalization = True
+        self.critic.obs_normalization = True
+        self.actor.hidden_dims = [512, 256, 128]
+        self.critic.hidden_dims = [512, 256, 128]
