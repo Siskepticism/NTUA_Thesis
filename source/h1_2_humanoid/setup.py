@@ -36,12 +36,11 @@ setup(
     install_requires=INSTALL_REQUIRES,
     license="BSD-3-Clause",
     include_package_data=True,
-    python_requires=">=3.10",
+    python_requires="==3.12.*",
     classifiers=[
         "Natural Language :: English",
-        "Programming Language :: Python :: 3.10",
-        "Isaac Sim :: 2023.1.0-hotfix.1",
-        "Isaac Sim :: 4.0.0",
+        "Programming Language :: Python :: 3.12",
+        "Isaac Sim :: 6.2.0",
     ],
     zip_safe=False,
 )

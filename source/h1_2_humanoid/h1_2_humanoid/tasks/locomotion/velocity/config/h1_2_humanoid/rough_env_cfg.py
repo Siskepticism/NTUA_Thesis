@@ -1,5 +1,5 @@
 
-from omni.isaac.lab.utils import configclass
+from isaaclab.utils import configclass
 
 from h1_2_humanoid.tasks.locomotion.velocity.velocity_env_cfg import \
     LocomotionVelocityRoughEnvCfg
