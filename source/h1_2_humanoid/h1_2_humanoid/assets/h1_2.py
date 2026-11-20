@@ -7,16 +7,16 @@ from h1_2_humanoid.assets import ISAAC_ASSET_DIR
 
 H1_2_HIP_ACTUATOR_CFG = ImplicitActuatorCfg(
     joint_names_expr=[".*hip_yaw_joint", ".*hip_roll_joint", ".*hip_pitch_joint"], #need to check if names are the same in urdf/usd file
-    joint_effort_limit=200.0,
+    joint_effort_limit=220.0,
     joint_velocity_limit=23,
-    stiffness={".*": 200.0},
-    damping={".*": 2.0},
+    stiffness={".*": 200.0},    #KP
+    damping={".*": 2.5},        #KD
     armature={".*": 0.01},
 )
 
 H1_2_KNEE_ACTUATOR_CFG = ImplicitActuatorCfg(
     joint_names_expr=[".*knee_joint"],
-    joint_effort_limit=300.0,
+    joint_effort_limit=360.0,
     joint_velocity_limit=14,
     stiffness={".*": 300.0},
     damping={".*": 4.0},

@@ -163,8 +163,8 @@ class RandomizationCfg:
         mode="startup",
         params={
             "asset_cfg": SceneEntityCfg("robot", body_names=".*"),
-            "static_friction_range": (0.2, 1.25),
-            "dynamic_friction_range": (0.2, 1.25),
+            "static_friction_range": (0.1, 1.25),
+            "dynamic_friction_range": (0.1, 1.25),
             "restitution_range": (0.0, 0.1),
             "num_buckets": 64,
         },
@@ -236,7 +236,7 @@ class RandomizationCfg:
         func=mdp.reset_joints_by_scale,
         mode="reset",
         params={
-            "position_range": (0.9, 1.1),
+            "position_range": (1.0, 1.0),
             "velocity_range": (0.0, 0.0),
         },
     )
@@ -246,7 +246,7 @@ class RandomizationCfg:
         func=mdp.push_by_setting_velocity,
         mode="interval",
         interval_range_s=(10.0, 15.0),
-        params={"velocity_range": {"x": (-0.5, 0.5), "y": (-0.5, 0.5)}},
+        params={"velocity_range": {"x": (-1.0, 1.0), "y": (-1.0, 1.0)}},
     )
 
 
