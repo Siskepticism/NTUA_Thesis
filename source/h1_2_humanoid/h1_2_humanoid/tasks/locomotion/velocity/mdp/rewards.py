@@ -68,3 +68,11 @@ def feet_slide(env, sensor_cfg: SceneEntityCfg, asset_cfg: SceneEntityCfg = Scen
     body_vel = asset.data.body_lin_vel_w.torch[:, asset_cfg.body_ids, :2]
     reward = torch.sum(body_vel.norm(dim=-1) * contacts, dim=1)
     return reward
+
+def feet_min_distance(env:RLTaskEnv, min_dist:float, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot", body_names=".*ankle_roll_link")) -> torch.Tensor:
+    """ Penalizing when feet get closer (in XY) to each other so they dont touch"""
+    asset = env.scene[asset_cfg.name]
+    feet_pos = asset.data.body_pos_w.torch[:, asset_cfg.body_ids, :2]
+    dist = torch.norm(feet_pos[:,0,:] - feet_pos[:,1,:], dim=-1)
+    reward = torch.clamp(min_dist - dist, min = 0.0)
+    return reward

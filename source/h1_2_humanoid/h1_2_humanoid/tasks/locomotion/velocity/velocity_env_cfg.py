@@ -301,7 +301,39 @@ class RewardsCfg:
     )
     # -- optional penalties
     flat_orientation_l2 = RewTerm(func=mdp.flat_orientation_l2, weight=-2.5)
-    dof_pos_limits = RewTerm(func=mdp.joint_pos_limits, weight=0.0)
+    dof_pos_limits = RewTerm(func=mdp.joint_pos_limits, weight=-1.0)
+
+    #Avoid feet collision + Smooth walking
+
+    joint_deviation_ankle = RewTerm(
+        func=mdp.joint_deviation_l1, 
+        weight=-0.2,
+        params={"asset_cfg": SceneEntityCfg("robot", joint_names=[".*ankle_roll_joint", ".*ankle_pitch_joint"])},
+    )
+    
+    feet_distance = RewTerm(
+        func=mdp.feet_min_distance, 
+        weight=-2.0,
+        params={"min_dist":0.18,"asset_cfg": SceneEntityCfg("robot", body_names=[".*ankle_roll_link"]),
+        },
+    )
+
+    base_height_l2 = RewTerm(
+        func=mdp.base_height_l2,
+        weight=-0.2,
+        params={"target_height": 1.0},
+    )
+    dof_vel_l2 = RewTerm(func=mdp.joint_vel_l2, weight=-1.0e-3)
+    dof_acc_l2 = RewTerm(func=mdp.joint_acc_l2, weight=-1.0e-7)
+
+    contact_forces = RewTerm(
+        func=mdp.contact_forces,
+        weight=-1.0e-3,
+        params={
+            "sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*ankle_roll_link"),
+            "threshold": 800.0,# feet placement with soft touch  
+        },
+    )
 
 
 @configclass
