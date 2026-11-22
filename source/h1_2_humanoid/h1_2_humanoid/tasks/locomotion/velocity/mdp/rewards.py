@@ -89,3 +89,11 @@ def feet_lateral_distance(env:RLTaskEnv, min_dist:float, asset_cfg: SceneEntityC
     lateral_dist = torch.abs(delta_b[:, 1])
     reward = torch.clamp(min_dist - lateral_dist, min=0.0)
     return reward
+
+def feet_clearance_l2(
+    env: RLTaskEnv, target_height: float, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot", body_names=".*ankle_roll_link")) -> torch.Tensor:
+    """Penalize deviation from target swing height weighted by horizontal foot speed."""
+    asset = env.scene[asset_cfg.name]
+    z = asset.data.body_pos_w.torch[:, asset_cfg.body_ids, 2]
+    v = asset.data.body_lin_vel_w.torch[:, asset_cfg.body_ids, :2].norm(dim=-1)
+    return ((z - target_height) ** 2 * torch.tanh(2.0 * v)).sum(dim=1)
