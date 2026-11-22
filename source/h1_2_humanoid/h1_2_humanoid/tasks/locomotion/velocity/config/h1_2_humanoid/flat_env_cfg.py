@@ -13,9 +13,9 @@ class HumanoidFlatEnvCfg(HumanoidRoughEnvCfg):
         # override rewards
         self.rewards.flat_orientation_l2.weight = -2.0
         self.rewards.joint_torques_l2.weight = -2.5e-5
-        self.rewards.feet_air_time.weight = 2.0
-        self.rewards.feet_air_time.params["threshold_min"] = 0.2
-        self.rewards.feet_air_time.params["threshold_max"] = 0.4
+        self.rewards.feet_air_time.weight = 1.25
+        self.rewards.feet_air_time.params["threshold_min"] = 0.20
+        self.rewards.feet_air_time.params["threshold_max"] = 0.40
         self.rewards.track_lin_vel_xy_exp.weight = 2.0
         self.rewards.track_ang_vel_z_exp.weight = 1.0
 

@@ -301,20 +301,29 @@ class RewardsCfg:
     )
     # -- optional penalties
     flat_orientation_l2 = RewTerm(func=mdp.flat_orientation_l2, weight=-2.5)
-    dof_pos_limits = RewTerm(func=mdp.joint_pos_limits, weight=0.0)
+    dof_pos_limits = RewTerm(func=mdp.joint_pos_limits, weight=-1.0)
 
     #Avoid feet collision + Smooth walking
 
     joint_deviation_ankle = RewTerm(
         func=mdp.joint_deviation_l1, 
         weight=-0.05,
-        params={"asset_cfg": SceneEntityCfg("robot", joint_names=[".*ankle_roll_joint", ".*ankle_pitch_joint"])},
+        params={"asset_cfg": SceneEntityCfg("robot", joint_names=[".*ankle_roll_joint"])},
     )
     
     feet_distance = RewTerm(
-        func=mdp.feet_min_distance, 
+        func=mdp.feet_lateral_distance, 
         weight=-2.0,
         params={"min_dist":0.15,"asset_cfg": SceneEntityCfg("robot", body_names=[".*ankle_roll_link"]),
+        },
+    )
+
+    feet_clearance = RewTerm(
+        func=mdp.feet_clearance_l2,
+        weight=-3.0,
+        params={
+            "target_height": 0.13,
+            "asset_cfg": SceneEntityCfg("robot", body_names=[".*ankle_roll_link"]),
         },
     )
 
