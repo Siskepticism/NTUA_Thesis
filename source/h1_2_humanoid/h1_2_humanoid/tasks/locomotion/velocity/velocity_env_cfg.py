@@ -92,13 +92,13 @@ class CommandsCfg:
     base_velocity = mdp.UniformVelocityCommandCfg(
         asset_name="robot",
         resampling_time_range=(10.0, 10.0),
-        rel_standing_envs=0.02,
+        rel_standing_envs=0.08,
         rel_heading_envs=1.0,
         heading_command=True,
         heading_control_stiffness=0.5,
         debug_vis=True,
         ranges=mdp.UniformVelocityCommandCfg.Ranges(
-            lin_vel_x=(-1.0, 1.0), lin_vel_y=(-1.0, 1.0), ang_vel_z=(-1.0, 1.0), heading=(-math.pi, math.pi)
+            lin_vel_x=(-0.5, 1.0), lin_vel_y=(-0.5, 0.5), ang_vel_z=(-1.0, 1.0), heading=(-math.pi, math.pi)
         ),
     )
 
@@ -256,10 +256,10 @@ class RewardsCfg:
 
     # -- task
     track_lin_vel_xy_exp = RewTerm(
-        func=mdp.track_lin_vel_xy_exp, weight=1.0, params={"command_name": "base_velocity", "std": math.sqrt(0.25)}
+        func=mdp.track_lin_vel_xy_exp, weight=1.5, params={"command_name": "base_velocity", "std": math.sqrt(0.25)}
     )
     track_ang_vel_z_exp = RewTerm(
-        func=mdp.track_ang_vel_z_exp, weight=0.5, params={"command_name": "base_velocity", "std": math.sqrt(0.25)}
+        func=mdp.track_ang_vel_z_exp, weight=0.75, params={"command_name": "base_velocity", "std": math.sqrt(0.25)}
     )
     # -- penalties
     lin_vel_z_l2 = RewTerm(func=mdp.lin_vel_z_l2, weight=-2.0)
@@ -268,17 +268,17 @@ class RewardsCfg:
     action_rate_l2 = RewTerm(func=mdp.action_rate_l2, weight=-0.01)
     feet_air_time = RewTerm(
         func=mdp.feet_air_time_positive_biped,
-        weight=2.0,
+        weight=1.25,
         params={
             "sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*ankle_roll_link"),
             "command_name": "base_velocity",
-            "threshold_min": 0.2,
-            "threshold_max": 0.5,
+            "threshold_min": 0.20,
+            "threshold_max": 0.40,
         },
     )
     feet_slide = RewTerm(
         func=mdp.feet_slide,
-        weight=-0.25,
+        weight=-0.4,
         params={
             "sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*ankle_roll_link"),
             "asset_cfg": SceneEntityCfg("robot", body_names=".*ankle_roll_link"),
@@ -296,33 +296,34 @@ class RewardsCfg:
     )
     joint_deviation_knee = RewTerm(
         func=mdp.joint_deviation_l1,
-        weight=-0.01,
+        weight=-0.05,
         params={"asset_cfg": SceneEntityCfg("robot", joint_names=[".*knee_joint"])},
     )
     # -- optional penalties
     flat_orientation_l2 = RewTerm(func=mdp.flat_orientation_l2, weight=-2.5)
-    dof_pos_limits = RewTerm(func=mdp.joint_pos_limits, weight=-1.0)
+    dof_pos_limits = RewTerm(func=mdp.joint_pos_limits, weight=0.0)
 
     #Avoid feet collision + Smooth walking
 
     joint_deviation_ankle = RewTerm(
         func=mdp.joint_deviation_l1, 
-        weight=-0.2,
+        weight=-0.05,
         params={"asset_cfg": SceneEntityCfg("robot", joint_names=[".*ankle_roll_joint", ".*ankle_pitch_joint"])},
     )
     
     feet_distance = RewTerm(
         func=mdp.feet_min_distance, 
         weight=-2.0,
-        params={"min_dist":0.18,"asset_cfg": SceneEntityCfg("robot", body_names=[".*ankle_roll_link"]),
+        params={"min_dist":0.15,"asset_cfg": SceneEntityCfg("robot", body_names=[".*ankle_roll_link"]),
         },
     )
 
     base_height_l2 = RewTerm(
         func=mdp.base_height_l2,
         weight=-0.2,
-        params={"target_height": 1.0},
+        params={"target_height": 0.96},
     )
+    """
     dof_vel_l2 = RewTerm(func=mdp.joint_vel_l2, weight=-1.0e-3)
     dof_acc_l2 = RewTerm(func=mdp.joint_acc_l2, weight=-1.0e-7)
 
@@ -333,7 +334,7 @@ class RewardsCfg:
             "sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*ankle_roll_link"),
             "threshold": 800.0,# feet placement with soft touch  
         },
-    )
+    )"""
 
 
 @configclass
@@ -391,6 +392,8 @@ class LocomotionVelocityRoughEnvCfg(ManagerBasedRLEnvCfg):
         # simulation settings
         self.sim.dt = 0.005
         self.sim.render_interval = self.decimation
+        self.events = self.randomization
+        
 
         self.sim.physics_material = self.scene.terrain.physics_material
         # update sensor update periods

@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 from isaaclab.managers import SceneEntityCfg
 from isaaclab.sensors import ContactSensor
+from isaaclab.utils.math import quat_apply_inverse, yaw_quat
 
 if TYPE_CHECKING:
     from isaaclab.envs import RLTaskEnv
@@ -31,6 +32,7 @@ def feet_air_time(env: RLTaskEnv, command_name: str, sensor_cfg: SceneEntityCfg,
     air_time = torch.clamp(air_time, max=threshold_max - threshold_min)
     reward = torch.sum(air_time, dim=1)
     # no reward for zero command
+    cmd = env.command_manager.get_command(command_name)
     reward *= torch.norm(env.command_manager.get_command(command_name)[:, :2], dim=1) > 0.1
     return reward
 
@@ -56,6 +58,7 @@ def feet_air_time_positive_biped(env, command_name: str, threshold_min: float, t
     # no reward for small steps
     reward *= reward > threshold_min
     # no reward for zero command
+    cmd = env.command_manager.get_command(command_name)
     reward *= torch.norm(env.command_manager.get_command(command_name)[:, :2], dim=1) > 0.1
     return reward
 
@@ -75,4 +78,14 @@ def feet_min_distance(env:RLTaskEnv, min_dist:float, asset_cfg: SceneEntityCfg =
     feet_pos = asset.data.body_pos_w.torch[:, asset_cfg.body_ids, :2]
     dist = torch.norm(feet_pos[:,0,:] - feet_pos[:,1,:], dim=-1)
     reward = torch.clamp(min_dist - dist, min = 0.0)
+    return reward
+
+def feet_lateral_distance(env:RLTaskEnv, min_dist:float, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot", body_names=".*ankle_roll_link")) -> torch.Tensor:
+    """ Penalize  when feet get closerthan min_dist in lateral axis"""
+    asset = env.scene[asset_cfg.name]
+    feet_pos_w = asset.data.body_pos_w.torch[:, asset_cfg.body_ids, :3]
+    delta_w = feet_pos_w[:, 0, :] - feet_pos_w[:, 1, :]
+    delta_b = quat_apply_inverse(yaw_quat(asset.data.root_quat_w.torch), delta_w)
+    lateral_dist = torch.abs(delta_b[:, 1])
+    reward = torch.clamp(min_dist - lateral_dist, min=0.0)
     return reward
