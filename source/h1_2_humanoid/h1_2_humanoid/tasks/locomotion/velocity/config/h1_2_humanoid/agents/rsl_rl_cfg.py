@@ -12,16 +12,17 @@ class HumanoidRoughPPORunnerCfg(RslRlOnPolicyRunnerCfg):
     max_iterations = 30000
     save_interval = 200
     experiment_name = "h1_2_rough"
+    obs_groups = {"actor": ["policy"], "critic": ["critic"]}
     actor = RslRlMLPModelCfg(
         hidden_dims=[512, 256, 128],
         activation="elu",
-        obs_normalization=False,
+        obs_normalization=True,
         distribution_cfg=RslRlMLPModelCfg.GaussianDistributionCfg(init_std=1.0),
     )
     critic = RslRlMLPModelCfg(
         hidden_dims=[512, 256, 128],
         activation="elu",
-        obs_normalization=False,
+        obs_normalization=True,
     )
     algorithm = RslRlPpoAlgorithmCfg(
         value_loss_coef=1.0,
@@ -46,6 +47,7 @@ class HumanoidFlatPPORunnerCfg(HumanoidRoughPPORunnerCfg):
 
         self.max_iterations = 4000
         self.experiment_name = "h1_2_flat"
+        self.obs_groups = {"actor": ["policy"], "critic": ["policy"]}
         self.actor.obs_normalization = True
         self.critic.obs_normalization = True
         self.actor.hidden_dims = [512, 256, 128]

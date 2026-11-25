@@ -1,14 +1,21 @@
 
 from isaaclab.utils import configclass
 
-from .rough_env_cfg import HumanoidRoughEnvCfg
-
+from h1_2_humanoid.tasks.locomotion.velocity.velocity_env_cfg import (
+    LocomotionVelocityRoughEnvCfg,
+)
+from h1_2_humanoid.assets.h1_2 import H1_2_HUMANOID_CFG
 
 @configclass
-class HumanoidFlatEnvCfg(HumanoidRoughEnvCfg):
+class HumanoidFlatEnvCfg(LocomotionVelocityRoughEnvCfg):
     def __post_init__(self):
         # post init of parent
         super().__post_init__()
+
+        self.scene.robot = H1_2_HUMANOID_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot") #robot
+        self.observations.policy.height_scan = None #proprioception only
+        self.observations.critic = None
+        self.scene.height_scanner = None
 
         # override rewards
         self.rewards.flat_orientation_l2.weight = -2.0

@@ -33,7 +33,7 @@ def feet_air_time(env: RLTaskEnv, command_name: str, sensor_cfg: SceneEntityCfg,
     reward = torch.sum(air_time, dim=1)
     # no reward for zero command
     cmd = env.command_manager.get_command(command_name)
-    reward *= torch.norm(env.command_manager.get_command(command_name)[:, :2], dim=1) > 0.1
+    reward *= (torch.norm(cmd[:, :2], dim=1) + torch.abs(cmd[:, 2])) > 0.1
     return reward
 
 
@@ -59,7 +59,7 @@ def feet_air_time_positive_biped(env, command_name: str, threshold_min: float, t
     reward *= reward > threshold_min
     # no reward for zero command
     cmd = env.command_manager.get_command(command_name)
-    reward *= torch.norm(env.command_manager.get_command(command_name)[:, :2], dim=1) > 0.1
+    reward *= (torch.norm(cmd[:, :2], dim=1) + torch.abs(cmd[:, 2])) > 0.1
     return reward
 
 
@@ -96,4 +96,16 @@ def feet_clearance_l2(
     asset = env.scene[asset_cfg.name]
     z = asset.data.body_pos_w.torch[:, asset_cfg.body_ids, 2]
     v = asset.data.body_lin_vel_w.torch[:, asset_cfg.body_ids, :2].norm(dim=-1)
-    return ((z - target_height) ** 2 * torch.tanh(2.0 * v)).sum(dim=1)
+    reward = ((z - target_height) ** 2 * torch.tanh(2.0 * v)).sum(dim=1)
+    return reward
+
+
+def feet_clearance_relative(
+    env: RLTaskEnv, target_height: float, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot", body_names=".*ankle_roll_link")) -> torch.Tensor:
+    """Penalize deviation from target swing height relative to lower foot (meaning real - terrain height)."""
+    asset = env.scene[asset_cfg.name]
+    z = asset.data.body_pos_w.torch[:, asset_cfg.body_ids, 2]
+    rel = z - z.min(dim=1, keepdim=True)[0]
+    v = asset.data.body_lin_vel_w.torch[:, asset_cfg.body_ids, :2].norm(dim=-1)
+    reward = ((rel - target_height) ** 2 * torch.tanh(2.0 * v)).sum(dim=1)
+    return reward
