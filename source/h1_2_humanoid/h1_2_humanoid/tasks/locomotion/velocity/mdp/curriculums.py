@@ -87,42 +87,35 @@ def modify_push_force(
         starting_step: The number of steps after which the curriculum is applied.
     """
     try:
-        term_cfg = env.event_manager.get_term_cfg('push_robot')
-    except:
+        term_cfg = env.event_manager.get_term_cfg(term_name)
+    except Exception:
         # print("No push_robot term found in the event manager")
         return 0.0
-    curr_setting = term_cfg.params['velocity_range']['x'][1]
+    
+    curr_x = float(term_cfg.params["velocity_range"]["x"][1])
+    curr_y = float(term_cfg.params["velocity_range"]["y"][1])
+
     if env.common_step_counter < starting_step:
-        return curr_setting
+        return curr_x
+    
     if env.common_step_counter % interval == 0:
+        base_contact = torch.sum(env.termination_manager.get_term("base_contact"))
+        time_out = torch.sum(env.termination_manager.get_term("time_out"))
 
-        
-        if torch.sum(env.termination_manager._term_dones["base_contact"]) < torch.sum(env.termination_manager._term_dones["time_out"]) * 2:
-            # obtain term settings
-            term_cfg = env.event_manager.get_term_cfg('push_robot')
-            # update term settings
-            curr_setting = term_cfg.params['velocity_range']['x'][1]
-            curr_setting = np.clip(curr_setting * 1.5, 0.0, max_velocity[0])
-            term_cfg.params['velocity_range']['x'] = (-curr_setting, curr_setting)
-            curr_setting = term_cfg.params['velocity_range']['y'][1]
-            curr_setting = np.clip(curr_setting * 1.5, 0.0, max_velocity[1])
-            term_cfg.params['velocity_range']['y'] = (-curr_setting, curr_setting)
-            env.event_manager.set_term_cfg('push_robot', term_cfg)
-        
+        if time_out > 0 and base_contact < time_out * 0.5:
+            curr_x = float(np.clip(curr_x + 0.1, 0.0, max_velocity[0]))
+            curr_y = float(np.clip(curr_y + 0.1, 0.0, max_velocity[1]))
+            term_cfg.params["velocity_range"]["x"] = (-curr_x, curr_x)
+            term_cfg.params["velocity_range"]["y"] = (-curr_y, curr_y)
+            env.event_manager.set_term_cfg(term_name, term_cfg)
+        elif base_contact > time_out:
+            curr_x = float(np.clip(curr_x - 0.1, 0.0, max_velocity[0]))
+            curr_y = float(np.clip(curr_y - 0.1, 0.0, max_velocity[1]))
+            term_cfg.params["velocity_range"]["x"] = (-curr_x, curr_x)
+            term_cfg.params["velocity_range"]["y"] = (-curr_y, curr_y)
+            env.event_manager.set_term_cfg(term_name, term_cfg)
 
-        if torch.sum(env.termination_manager._term_dones["base_contact"]) > torch.sum(env.termination_manager._term_dones["time_out"]) / 2:
-            # obtain term settings
-            term_cfg = env.event_manager.get_term_cfg('push_robot')
-            # update term settings
-            curr_setting = term_cfg.params['velocity_range']['x'][1]
-            curr_setting = np.clip(curr_setting - 0.2, 0.0, max_velocity[0])
-            term_cfg.params['velocity_range']['x'] = (-curr_setting, curr_setting)
-            curr_setting = term_cfg.params['velocity_range']['y'][1]
-            curr_setting = np.clip(curr_setting - 0.2, 0.0, max_velocity[1])
-            term_cfg.params['velocity_range']['y'] = (-curr_setting, curr_setting)
-            env.event_manager.set_term_cfg('push_robot', term_cfg)
-
-    return curr_setting
+    return curr_x
 
 
 def modify_command_velocity(
@@ -150,13 +143,23 @@ def modify_command_velocity(
     if env.common_step_counter < starting_step:
         return curr_lin_vel_x[1]
     
-    if env.common_step_counter % interval == 0:
+    if env.common_step_counter % interval == 0 and len(env_ids) > 0:
         term_cfg = env.reward_manager.get_term_cfg(term_name)
-        rew = env.reward_manager._episode_sums[term_name][env_ids]
+        episode_sums = env.reward_manager._episode_sums
+        if isinstance(episode_sums, dict):
+            rew = episode_sums[term_name][env_ids]
+        else:
+            term_idx = env.reward_manager.active_terms.index(term_name)
+            rew = (
+                episode_sums[env_ids, term_idx]
+                if episode_sums.shape[0] == env.num_envs
+                else episode_sums[term_idx, env_ids]
+            )
+
         if torch.mean(rew) / env.max_episode_length > 0.8 * term_cfg.weight * env.step_dt:
             curr_lin_vel_x = (
-                np.clip(curr_lin_vel_x[0] - 0.5, max_velocity[0], 0.), 
-                np.clip(curr_lin_vel_x[1] + 0.5, 0., max_velocity[1])
+                float(np.clip(curr_lin_vel_x[0] - 0.2, max_velocity[0], 0.0)),
+                float(np.clip(curr_lin_vel_x[1] + 0.2, 0.0, max_velocity[1])),
             )
             command_cfg.ranges.lin_vel_x = curr_lin_vel_x
 
